@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-	"time"
 )
 
 type wsWriter struct {
@@ -34,8 +33,6 @@ func fork(c chan []byte) chan []byte {
 }
 
 func server(c chan []byte) {
-	wait := 60 * time.Second
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadFile("index.html")
 		if err != nil {
@@ -57,7 +54,6 @@ func server(c chan []byte) {
 		f := fork(c)
 		go func() {
 			for msg := range f {
-				ws.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				if err := ws.WriteMessage(websocket.OpText, msg); err != nil {
 					panic(err)
 				}
@@ -65,15 +61,10 @@ func server(c chan []byte) {
 			ws.WriteMessage(websocket.OpClose, []byte{})
 		}()
 
-		ws.SetReadDeadline(time.Now().Add(wait))
 		for {
-			code, _, err := ws.NextReader()
+			_, _, err := ws.NextReader()
 			if err != nil {
 				return
-			}
-			switch code {
-			case websocket.OpPong:
-				ws.SetReadDeadline(time.Now().Add(wait))
 			}
 		}
 	})
