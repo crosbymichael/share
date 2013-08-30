@@ -23,7 +23,7 @@ func (w *wsWriter) Write(p []byte) (int, error) {
 }
 
 func fork(c chan []byte) chan []byte {
-	f := make(chan []byte, 1)
+	f := make(chan []byte)
 	go func() {
 		for m := range c {
 			f <- m
@@ -97,7 +97,7 @@ func main() {
 	term.SetRawTerminal(m.Fd())
 	term.SetWinsize(m.Fd(), size)
 
-	c := make(chan []byte, 1024)
+	c := make(chan []byte)
 	ws := &wsWriter{c}
 	go server(c)
 
